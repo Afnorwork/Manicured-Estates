@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2D5016">
+<title>Manicured Estates</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #2D5016;
+    --green-med: #4A7C2F;
+    --green-light: #7AB648;
+    --green-pale: #EAF4E2;
+    --gold: #C8A951;
+    --gold-light: #F5E6B8;
+    --orange: #E8640A;
+    --red: #C0392B;
+    --white: #FAFDF7;
+    --gray: #8A9B7E;
+    --gray-light: #E8EDE4;
+    --text: #1A2A0E;
+    --cash-bg: #FFF3E0;
+    --cash-border: #E8640A;
+    --biweek-bg: #E8F4FD;
+    --biweek-border: #2980B9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--green-dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--green-dark);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--green-med);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .app-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--gold);
+  }
+  .header-date {
+    font-size: 12px;
+    color: var(--gray);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .day-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--green-med);
+    background: transparent;
+    color: var(--gray);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .day-tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--green-dark);
+    font-weight: 600;
+  }
+  .day-tab.today-indicator {
+    border-color: var(--green-light);
+    color: var(--green-light);
+  }
+
+  /* ── Main content ── */
+  .main {
+    background: var(--white);
+    min-height: calc(100vh - 110px);
+    border-radius: 20px 20px 0 0;
+    padding: 16px 0 100px;
+  }
+
+  /* ── Day header ── */
+  .day-header {
+    padding: 12px 20px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gray-light);
+    margin-bottom: 8px;
+  }
+  .day-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1.5px;
+    color: var(--green-dark);
+    line-height: 1;
+  }
+  .week-badge {
+    background: var(--biweek-bg);
+    border: 1.5px solid var(--biweek-border);
+    color: #1a5276;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+  }
+  .progress-bar {
+    height: 4px;
+    background: var(--gray-light);
+    margin: 0 20px 12px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-med), var(--green-light));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    padding: 0 20px 8px;
+    font-size: 12px;
+    color: var(--gray);
+    font-weight: 500;
+  }
+
+  /* ── Stop cards ── */
+  .stop-card {
+    margin: 8px 16px;
+    border-radius: 14px;
+    border: 2px solid var(--gray-light);
+    background: #fff;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .stop-card.done {
+    border-color: var(--green-light);
+    background: var(--green-pale);
+    opacity: 0.75;
+  }
+  .stop-card.skipped {
+    border-color: var(--gray);
+    background: var(--gray-light);
+    opacity: 0.6;
+  }
+  .stop-card.cash {
+    border-color: var(--cash-border);
+    background: var(--cash-bg);
+  }
+  .stop-card.biweek {
+    border-color: var(--biweek-border);
+    background: var(--biweek-bg);
+  }
+  .stop-card.unbilled {
+    border-color: var(--gray);
+    background: #f9f9f9;
+  }
+
+  .stop-header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .stop-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--green-dark);
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .stop-card.done .stop-number { background: var(--green-light); color: white; }
+  .stop-card.skipped .stop-number { background: var(--gray); color: white; }
+  .stop-card.cash .stop-number { background: var(--orange); color: white; }
+  .stop-card.unbilled .stop-number { background: var(--gray); color: white; }
+
+  .stop-info { flex: 1; min-width: 0; }
+  .stop-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+  .stop-card.done .stop-name { text-decoration: line-through; color: var(--gray); }
+
+  .stop-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .meta-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 8px;
+    letter-spacing: 0.3px;
+  }
+  .badge-service { background: var(--green-pale); color: var(--green-dark); }
+  .badge-price { background: var(--gold-light); color: #7A5A00; font-weight: 600; }
+  .badge-biweek { background: var(--biweek-bg); color: #1a5276; border: 1px solid var(--biweek-border); }
+  .badge-cash { background: var(--cash-bg); color: var(--orange); border: 1px solid var(--cash-border); }
+  .badge-unbilled { background: #f0f0f0; color: var(--gray); }
+  .badge-note { background: #FFF8E1; color: #8B6914; font-style: italic; }
+
+  .stop-status-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Action buttons ── */
+  .stop-actions {
+    padding: 0 16px 14px;
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    flex: 1;
+    padding: 11px 8px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-done {
+    background: var(--green-med);
+    color: white;
+  }
+  .btn-done:active { background: var(--green-dark); }
+  .btn-skip {
+    background: var(--gray-light);
+    color: var(--gray);
+    flex: 0.6;
+  }
+  .btn-details {
+    background: var(--gold-light);
+    color: #7A5A00;
+    flex: 0.6;
+  }
+  .btn-undo {
+    background: var(--gray-light);
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  /* ── Details panel ── */
+  .stop-details {
+    padding: 0 16px 14px;
+    border-top: 1px solid var(--gray-light);
+    display: none;
+  }
+  .stop-details.open { display: block; }
+  .detail-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    align-items: center;
+  }
+  .detail-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray);
+    width: 80px;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .detail-input {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--white);
+    transition: border-color 0.2s;
+  }
+  .detail-input:focus {
+    outline: none;
+    border-color: var(--green-med);
+  }
+  .detail-input.price-input { font-weight: 600; color: var(--green-dark); }
+
+  /* ── Monday flex ── */
+  .monday-section {
+    padding: 0 16px;
+  }
+  .monday-add-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: 2px dashed var(--green-med);
+    background: transparent;
+    color: var(--green-med);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .monday-add-btn:active { background: var(--green-pale); }
+
+  .monday-entry {
+    background: #fff;
+    border: 2px solid var(--gray-light);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .monday-entry select, .monday-entry input, .monday-entry textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    margin-top: 6px;
+    background: var(--white);
+    color: var(--text);
+  }
+  .monday-entry label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .entry-field { margin-bottom: 8px; }
+  .monday-remove {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 0;
+    margin-top: 4px;
+  }
+
+  /* ── Sync button ── */
+  .sync-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--green-dark);
+    padding: 12px 20px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-top: 2px solid var(--green-med);
+    z-index: 200;
+  }
+  .sync-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: var(--gold);
+    color: var(--green-dark);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sync-btn:active { transform: scale(0.98); background: #B8993D; }
+  .sync-btn.syncing { background: var(--green-med); color: white; }
+  .sync-btn.success { background: var(--green-light); color: white; }
+  .sync-btn.error { background: var(--red); color: white; }
+
+  .summary-pill {
+    background: var(--green-med);
+    border-radius: 10px;
+    padding: 8px 14px;
+    text-align: center;
+  }
+  .summary-pill .pill-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .summary-pill .pill-label {
+    font-size: 10px;
+    color: var(--gray);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    top: 120px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--green-dark);
+    color: var(--gold);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 300;
+    pointer-events: none;
+    white-space: nowrap;
+    border: 1px solid var(--green-med);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Extra work items ── */
+  .extra-work-list { margin-top: 10px; }
+  .extra-work-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    background: var(--green-pale);
+    border-radius: 10px;
+    padding: 8px 10px;
+    border: 1px solid #c5e0b0;
+  }
+  .extra-work-item select {
+    flex: 1.6;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: white;
+    color: var(--text);
+  }
+  .extra-work-item input {
+    flex: 0.9;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green-dark);
+    background: white;
+    min-width: 0;
+  }
+  .extra-remove-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .add-extra-btn {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1.5px dashed var(--green-med);
+    background: transparent;
+    color: var(--green-med);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.2s;
+  }
+  .add-extra-btn:active { background: var(--green-pale); }
+  .detail-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 12px;
+    margin-bottom: 2px;
+    display: block;
+  }
+
+  .day-tab.schedule-tab {
+    background: var(--green-dark);
+    border-color: var(--gold);
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .day-tab.schedule-tab.active {
+    background: var(--gold);
+    color: var(--green-dark);
+  }
+
+  /* ── Schedule a Job panel ── */
+  .schedule-job-panel {
+    padding: 0 16px;
+  }
+  .schedule-job-form {
+    background: #fff;
+    border: 2px solid var(--gold);
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 14px;
+  }
+  .schedule-job-form .form-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--green-dark);
+    margin-bottom: 14px;
+  }
+  .schedule-field {
+    margin-bottom: 12px;
+  }
+  .schedule-field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: block;
+    margin-bottom: 5px;
+  }
+  .schedule-field input,
+  .schedule-field select,
+  .schedule-field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--gray-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    background: var(--white);
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .schedule-field input:focus,
+  .schedule-field select:focus,
+  .schedule-field textarea:focus {
+    outline: none;
+    border-color: var(--green-med);
+  }
+  .schedule-field textarea {
+    resize: none;
+    height: 80px;
+  }
+  .schedule-add-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: var(--gold);
+    color: var(--green-dark);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+  .schedule-add-btn:active { background: #B8993D; transform: scale(0.98); }
+
+  /* ── Upcoming jobs list ── */
+  .upcoming-section-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--green-dark);
+    padding: 4px 0 10px;
+    border-bottom: 2px solid var(--gray-light);
+    margin-bottom: 12px;
+  }
+  .upcoming-job-card {
+    background: #fff;
+    border: 2px solid var(--gold-light);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .upcoming-day-badge {
+    background: var(--green-dark);
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+  .upcoming-job-info { flex: 1; min-width: 0; }
+  .upcoming-job-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .upcoming-job-desc {
+    font-size: 12px;
+    color: var(--gray);
+    font-style: italic;
+  }
+  .upcoming-job-remove {
+    background: none;
+    border: none;
+    color: var(--gray);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .upcoming-job-remove:active { color: var(--red); }
+  .no-upcoming {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray);
+    font-size: 14px;
+  }
+  .no-upcoming .icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* ── One-off stop card indicator ── */
+  .stop-card.oneoff {
+    border-color: var(--gold);
+    background: var(--gold-light);
+  }
+  .stop-card.oneoff .stop-number {
+    background: var(--gold);
+    color: var(--green-dark);
+  }
+  .empty-day {
+    text-align: center;
+    padding: 60px 30px;
+    color: var(--gray);
+  }
+  .empty-day .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-day h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .empty-day p { font-size: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-top">
+    <div class="app-title">🌿 Manicured Estates</div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+  <div class="day-tabs" id="dayTabs"></div>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<div class="sync-bar">
+  <div class="summary-pill">
+    <div class="pill-num" id="doneCount">0</div>
+    <div class="pill-label">Done</div>
+  </div>
+  <div class="summary-pill">
+    <div class="pill-num" id="billTotal">$0</div>
+    <div class="pill-label">Billed</div>
+  </div>
+  <button class="sync-btn" id="syncBtn" onclick="syncToSheets()">SAVE DAY</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SHEET_ID = '1I6A8_x8xkEP1KqZ3ve115AFwI_KbwvP4';
+
+// ── Schedule data ──────────────────────────────────────────────────────────
+const SCHEDULE = {
+  Monday: { type: 'flex' },
+  Tuesday: {
+    type: 'route',
+    stops: [
+      { name: 'Becker',       service: 'MTE', price: 65,  freq: 'weekly',   billing: true },
+      { name: 'Les Smith',    service: 'MTE', price: 55,  freq: 'weekly',   billing: true },
+      { name: 'Mary Powning', service: 'Visit', price: 0, freq: 'weekly',   billing: false, note: 'Grandma — no charge', unbilled: true },
+      { name: 'Kelly Bass',   service: 'MTE + Bi-Weekly Maint.', price: 77, freq: 'biweek', billing: true, note: '$15 MTE + $62 maint.' },
+    ]
+  },
+  Wednesday: {
+    type: 'split',
+    weekA: {
+      label: 'WEEK A — Moose Group',
+      stops: [
+        { name: 'Moose',              service: 'MTE', price: 35, freq: 'biweek', billing: true },
+        { name: 'Moose Neighbor',     service: 'MTE', price: 0,  freq: 'biweek', billing: false, cash: true, note: 'Cash — no bill' },
+        { name: 'Ron & Steph Wolff',  service: 'MTE', price: 35, freq: 'biweek', billing: true },
+        { name: 'Home',               service: 'MTE', price: 0,  freq: 'biweek', billing: false, unbilled: true, note: 'My house' },
+        { name: 'Kasler',             service: 'MTE', price: 50, freq: 'weekly', billing: true },
+        { name: 'Cassy Cook',         service: 'MTE', price: 35, freq: 'weekly', billing: true },
+        { name: 'Horse People',       service: 'MTE', price: 35, freq: 'weekly', billing: true },
+        { name: 'Robin Rice',         service: 'MTE', price: 40, freq: 'weekly', billing: true },
+      ]
+    },
+    weekB: {
+      label: 'WEEK B — Winter Group',
+      stops: [
+        { name: 'Katrina Winter',     service: 'MTE', price: 25, freq: 'biweek', billing: true },
+        { name: 'Hippy Lady',         service: 'MTE', price: 0,  freq: 'biweek', billing: false, cash: true, note: 'Cash — no bill' },
+        { name: 'Ting',               service: 'MTE', price: 40, freq: 'biweek', billing: true },
+        { name: 'Kasler',             service: 'MTE', price: 50, freq: 'weekly', billing: true },
+        { name: 'Cassy Cook',         service: 'MTE', price: 35, freq: 'weekly', billing: true },
+        { name: 'Horse People',       service: 'MTE', price: 35, freq: 'weekly', billing: true },
+        { name: 'Robin Rice',         service: 'MTE', price: 40, freq: 'weekly', billing: true },
+      ]
+    }
+  },
+  Thursday: {
+    type: 'route',
+    biweekClient: 'Byron Brown',
+    stops: [
+      { name: 'Anne Marie Moos',          service: 'MTE', price: 50,  freq: 'weekly', billing: true },
+      { name: 'Byron Brown',              service: 'MTE', price: 35,  freq: 'biweek', billing: true },
+      { name: 'David & Terry Vasenden',   service: 'MTE', price: 40,  freq: 'weekly', billing: true },
+      { name: 'Megan & Aaron Evans',      service: 'MTE', price: 50,  freq: 'weekly', billing: true },
+      { name: 'Charlene Burns',           service: 'MTE', price: 50,  freq: 'weekly', billing: true },
+      { name: 'Pat Bonk',                 service: 'MTE', price: 15,  freq: 'weekly', billing: true },
+      { name: 'Kathy Wilcox',             service: 'MTE', price: 25,  freq: 'weekly', billing: true },
+      { name: 'Georgene Harris',          service: 'MTE', price: 20,  freq: 'weekly', billing: true },
+    ]
+  },
+  Friday: {
+    type: 'route',
+    stops: [
+      { name: 'Tom Harris',                   service: 'MTE', price: 40,  freq: 'weekly', billing: true },
+      { name: 'James & Susan Davenport',      service: 'MTE', price: 45,  freq: 'weekly', billing: true },
+      { name: 'Rich & Janet Loverde',         service: 'MTE', price: 75,  freq: 'weekly', billing: true },
+      { name: 'Don Jackson',                  service: 'MTE', price: 50,  freq: 'weekly', billing: true },
+      { name: 'Robert & Marilyn Herschbach',  service: 'MTE', price: 100, freq: 'weekly', billing: true },
+    ]
+  }
+};
+
+const EXTRA_SERVICES = [
+  'Fertilize','Weed Control','Weed Spray (Roundup)','Pre-emergent',
+  'Pruning','Clean Up','Aeration','De-Thatch Turf','Thatch',
+  'Irrigation Repair','Irrigation Start Up','Irrigation Shutdown/Winterize',
+  'Snow Removal','Misc Work','Other'
+];
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const ALL_CLIENTS = [...new Set([
+  'Becker','Les Smith','Mary Powning','Kelly Bass','Moose','Moose Neighbor',
+  'Ron & Steph Wolff','Kasler','Cassy Cook','Horse People','Robin Rice',
+  'Katrina Winter','Hippy Lady','Ting','Anne Marie Moos','Byron Brown',
+  'David & Terry Vasenden','Megan & Aaron Evans','Charlene Burns','Pat Bonk',
+  'Kathy Wilcox','Georgene Harris','Tom Harris','James & Susan Davenport',
+  'Rich & Janet Loverde','Don Jackson','Robert & Marilyn Herschbach',
+  'Conni Carson','Kristine Coli','Bill Prickly Pear','Diane Kampe','Forrester'
+])].sort();
+
+// ── State ─────────────────────────────────────────────────────────────────
+let state = {
+  activeDay: null,
+  stopStates: {},
+  mondayEntries: [],
+  wedWeek: null,
+  scheduledJobs: [], // [{id, day, nameInfo, jobDesc, createdDate}]
+};
+
+// ── Date helpers ──────────────────────────────────────────────────────────
+function getToday() {
+  const d = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return days[d.getDay()];
+}
+
+function getWedWeek() {
+  // Week A = odd ISO week numbers, Week B = even
+  const d = new Date();
+  const startOfYear = new Date(d.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  return weekNum % 2 === 1 ? 'A' : 'B';
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
+}
+
+function getTodayStr() {
+  const d = new Date();
+  return `${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+// Get the date of a given day name within the next N weeks
+function getDateForDay(dayName, weeksAhead) {
+  const dayIndex = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(dayName);
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  let diff = dayIndex - d.getDay();
+  if (diff < 0) diff += 7;
+  if (diff === 0 && weeksAhead === 0) diff = 0;
+  d.setDate(d.getDate() + diff + (weeksAhead * 7));
+  return d;
+}
+
+function formatShort(d) {
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+
+// Build a list of upcoming day+date options for the next 4 weeks
+function getUpcomingDayOptions() {
+  const options = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let w = 0; w <= 4; w++) {
+    DAYS.forEach(dayName => {
+      const d = getDateForDay(dayName, w);
+      if (d >= today) {
+        const label = w === 0
+          ? `${dayName} — This week (${formatShort(d)})`
+          : w === 1
+          ? `${dayName} — Next week (${formatShort(d)})`
+          : `${dayName} — ${formatShort(d)}`;
+        const value = `${dayName}||${d.toISOString().split('T')[0]}`;
+        options.push({ label, value, day: dayName, date: d });
+      }
+    });
+  }
+  return options;
+}
+
+// Get the date string for a specific route day (this week's occurrence)
+function getRouteDayDate(dayName) {
+  const d = getDateForDay(dayName, 0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  // If that day already passed this week, show next week
+  if (d < today) {
+    const next = getDateForDay(dayName, 1);
+    return formatShort(next);
+  }
+  return formatShort(d);
+}
+
+// ── Stop key helper ───────────────────────────────────────────────────────
+function stopKey(day, stopName, idx) {
+  return `${day}_${idx}_${stopName}`;
+}
+
+// ── Get active stops for a day ────────────────────────────────────────────
+function getStops(day) {
+  const sched = SCHEDULE[day];
+  if (!sched) return [];
+  if (sched.type === 'route') return sched.stops;
+  if (sched.type === 'split') {
+    const week = state.wedWeek || getWedWeek();
+    return week === 'A' ? sched.weekA.stops : sched.weekB.stops;
+  }
+  return [];
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+function init() {
+  const today = getToday();
+  state.wedWeek = getWedWeek();
+  state.activeDay = DAYS.includes(today) ? today : 'Tuesday';
+
+  // Load saved state
+  const saved = localStorage.getItem('me_state_' + getTodayStr());
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      state.stopStates = parsed.stopStates || {};
+      state.mondayEntries = parsed.mondayEntries || [];
+    } catch(e) {}
+  }
+  // Load scheduled jobs (persists across days)
+  const savedJobs = localStorage.getItem('me_scheduled_jobs');
+  if (savedJobs) {
+    try { state.scheduledJobs = JSON.parse(savedJobs) || []; } catch(e) {}
+  }
+
+  renderHeader();
+  renderTabs();
+  renderDay(state.activeDay);
+}
+
+function saveState() {
+  localStorage.setItem('me_state_' + getTodayStr(), JSON.stringify({
+    stopStates: state.stopStates,
+    mondayEntries: state.mondayEntries
+  }));
+  // Scheduled jobs persist across days
+  localStorage.setItem('me_scheduled_jobs', JSON.stringify(state.scheduledJobs));
+}
+
+// ── Render header ─────────────────────────────────────────────────────────
+function renderHeader() {
+  document.getElementById('headerDate').textContent = formatDate(new Date());
+}
+
+// ── Render tabs ───────────────────────────────────────────────────────────
+function renderTabs() {
+  const today = getToday();
+  const container = document.getElementById('dayTabs');
+  const dayButtons = DAYS.map(day => {
+    const isActive = day === state.activeDay;
+    const isToday = day === today;
+    // Show dot if there are scheduled jobs for this day
+    const jobCount = state.scheduledJobs.filter(j => j.day === day).length;
+    const dot = jobCount > 0 ? ` <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-left:3px;vertical-align:middle;"></span>` : '';
+    return `<button class="day-tab ${isActive ? 'active' : ''} ${isToday && !isActive ? 'today-indicator' : ''}"
+      onclick="switchDay('${day}')">${day}${dot}</button>`;
+  }).join('');
+  const schedActive = state.activeDay === 'Schedule';
+  const totalJobs = state.scheduledJobs.length;
+  const schedButton = `<button class="day-tab schedule-tab ${schedActive ? 'active' : ''}"
+    onclick="switchDay('Schedule')">📋 Jobs${totalJobs > 0 ? ' ('+totalJobs+')' : ''}</button>`;
+  container.innerHTML = dayButtons + schedButton;
+}
+
+function switchDay(day) {
+  state.activeDay = day;
+  renderTabs();
+  renderDay(day);
+}
+
+// ── Render day ─────────────────────────────────────────────────────────────
+function renderDay(day) {
+  const sched = SCHEDULE[day];
+  const main = document.getElementById('mainContent');
+
+  if (day === 'Schedule') {
+    renderSchedulePanel(main);
+    updateSummary();
+    return;
+  }
+
+  if (day === 'Monday') {
+    renderMonday(main);
+    updateSummary();
+    return;
+  }
+
+  const stops = getStops(day);
+  let wedLabel = '';
+  if (day === 'Wednesday') {
+    const week = state.wedWeek || getWedWeek();
+    wedLabel = `<span class="week-badge">WEEK ${week} — ${week === 'A' ? 'MOOSE GROUP' : 'WINTER GROUP'}</span>
+      <button onclick="toggleWedWeek()" style="background:none;border:none;color:var(--gray);font-size:12px;cursor:pointer;margin-left:6px;">switch</button>`;
+  }
+
+  const doneCount = stops.filter((_,i) => (state.stopStates[stopKey(day,stops[i].name,i)]?.status === 'done')).length;
+  const pct = stops.length ? Math.round(doneCount/stops.length*100) : 0;
+
+  let html = `
+    <div class="day-header">
+      <div class="day-title">${day}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span style="font-size:12px;color:var(--gray);font-weight:600;">${getRouteDayDate(day)}</span>
+        <div>${wedLabel}</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-text">${doneCount} of ${stops.length} stops complete</div>
+  `;
+
+  stops.forEach((stop, idx) => {
+    const key = stopKey(day, stop.name, idx);
+    const ss = state.stopStates[key] || {};
+    const status = ss.status || 'pending';
+    const actualPrice = ss.actualPrice !== undefined ? ss.actualPrice : stop.price;
+    const extraWork = ss.extraWork || [];
+    const notes = ss.notes || '';
+    const detailsOpen = ss.detailsOpen || false;
+
+    let cardClass = '';
+    if (status === 'done') cardClass = 'done';
+    else if (status === 'skipped') cardClass = 'skipped';
+    else if (stop.cash) cardClass = 'cash';
+    else if (stop.unbilled) cardClass = 'unbilled';
+    else if (stop.freq === 'biweek') cardClass = 'biweek';
+
+    let statusIcon = '';
+    if (status === 'done') statusIcon = '✅';
+    else if (status === 'skipped') statusIcon = '⏭️';
+    else statusIcon = stop.cash ? '💵' : stop.unbilled ? '🏠' : '';
+
+    let badges = `<span class="meta-badge badge-service">${stop.service}</span>`;
+    if (stop.billing && stop.price > 0) badges += `<span class="meta-badge badge-price">$${actualPrice}</span>`;
+    if (stop.freq === 'biweek') badges += `<span class="meta-badge badge-biweek">2-week</span>`;
+    if (stop.cash) badges += `<span class="meta-badge badge-cash">💵 Cash</span>`;
+    if (!stop.billing && !stop.cash) badges += `<span class="meta-badge badge-unbilled">No charge</span>`;
+    if (stop.note) badges += `<span class="meta-badge badge-note">${stop.note}</span>`;
+
+    let actions = '';
+    if (status === 'pending') {
+      actions = `
+        <div class="stop-actions">
+          <button class="btn btn-done" onclick="markDone('${day}','${stop.name}',${idx})">✓ Done</button>
+          <button class="btn btn-details" onclick="toggleDetails('${day}','${stop.name}',${idx})">+ Details</button>
+          <button class="btn btn-skip" onclick="markSkipped('${day}','${stop.name}',${idx})">Skip</button>
+        </div>`;
+    } else {
+      actions = `
+        <div class="stop-actions">
+          <button class="btn btn-undo" onclick="markPending('${day}','${stop.name}',${idx})">↩ Undo</button>
+        </div>`;
+    }
+
+    const detailsClass = detailsOpen ? 'open' : '';
+    const details = `
+      <div class="stop-details ${detailsClass}" id="details_${key.replace(/[^a-zA-Z0-9]/g,'_')}">
+        <div class="detail-row">
+          <div class="detail-label">Price</div>
+          <input type="number" class="detail-input price-input" placeholder="$${stop.price}"
+            value="${actualPrice || ''}" step="0.01"
+            onchange="updateStopField('${day}','${stop.name}',${idx},'actualPrice',this.value)"
+            inputmode="decimal">
+        </div>
+        <span class="detail-section-label">Extra Work Done</span>
+        <div class="extra-work-list" id="extra_${key.replace(/[^a-zA-Z0-9]/g,'_')}">
+          ${extraWork.map((ew, ei) => `
+            <div class="extra-work-item">
+              <select onchange="updateExtraWork('${day}','${stop.name}',${idx},${ei},'service',this.value)">
+                ${EXTRA_SERVICES.map(s => `<option ${ew.service===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+              <input type="number" placeholder="$0" value="${ew.price||''}" inputmode="decimal" step="0.01"
+                onchange="updateExtraWork('${day}','${stop.name}',${idx},${ei},'price',this.value)">
+              <button class="extra-remove-btn" onclick="removeExtraWork('${day}','${stop.name}',${idx},${ei})">×</button>
+            </div>`).join('')}
+        </div>
+        <button class="add-extra-btn" onclick="addExtraWork('${day}','${stop.name}',${idx})">+ Add Extra Work</button>
+        <div class="detail-row">
+          <div class="detail-label">Notes</div>
+          <input type="text" class="detail-input" placeholder="Any notes..."
+            value="${notes}"
+            onchange="updateStopField('${day}','${stop.name}',${idx},'notes',this.value)">
+        </div>
+      </div>`;
+
+    html += `
+      <div class="stop-card ${cardClass}" id="card_${key.replace(/[^a-zA-Z0-9]/g,'_')}">
+        <div class="stop-header" onclick="toggleDetails('${day}','${stop.name}',${idx})">
+          <div class="stop-number">${idx+1}</div>
+          <div class="stop-info">
+            <div class="stop-name">${stop.name}</div>
+            <div class="stop-meta">${badges}</div>
+          </div>
+          <div class="stop-status-icon">${statusIcon}</div>
+        </div>
+        ${details}
+        ${actions}
+      </div>`;
+  });
+
+  // Append any one-off scheduled jobs for this day
+  const oneOffJobs = state.scheduledJobs.filter(j => j.day === day);
+  oneOffJobs.forEach((job, ji) => {
+    const key = `oneoff_${job.id}`;
+    const ss = state.stopStates[key] || {};
+    const status = ss.status || 'pending';
+    const stopNum = stops.length + ji + 1;
+    const actualPrice = ss.actualPrice || '';
+    const notes = ss.notes || '';
+    let cardClass = status === 'done' ? 'done' : status === 'skipped' ? 'skipped' : 'oneoff';
+    let statusIcon = status === 'done' ? '✅' : status === 'skipped' ? '⏭️' : '📋';
+    let priceField = status === 'pending' ? `
+      <div style="padding:0 16px 10px;display:flex;gap:10px;align-items:center;border-top:1px solid var(--gray-light);margin-top:4px;padding-top:10px;">
+        <div class="detail-label" style="font-size:11px;font-weight:600;color:var(--gray);width:60px;text-transform:uppercase;">Price</div>
+        <input type="number" class="detail-input price-input" placeholder="$0.00" value="${actualPrice}"
+          step="0.01" inputmode="decimal"
+          onchange="updateOneOffField('${job.id}','actualPrice',this.value)">
+        <div class="detail-label" style="font-size:11px;font-weight:600;color:var(--gray);width:50px;text-transform:uppercase;">Notes</div>
+        <input type="text" class="detail-input" placeholder="Optional" value="${notes}"
+          onchange="updateOneOffField('${job.id}','notes',this.value)">
+      </div>` : '';
+    let actions = '';
+    if (status === 'pending') {
+      actions = `<div class="stop-actions">
+        <button class="btn btn-done" onclick="markOneOffDone('${job.id}','${day}')">✓ Done</button>
+        <button class="btn btn-skip" onclick="markOneOffSkipped('${job.id}','${day}')">Skip</button>
+      </div>`;
+    } else {
+      actions = `<div class="stop-actions">
+        <button class="btn btn-undo" onclick="markOneOffPending('${job.id}','${day}')">↩ Undo</button>
+        ${status === 'done' ? `<button class="btn btn-details" style="font-size:12px;flex:0.5" onclick="removeScheduledJob('${job.id}')">✕ Remove</button>` : ''}
+      </div>`;
+    }
+    html += `
+      <div class="stop-card ${cardClass}" id="card_oneoff_${job.id}">
+        <div class="stop-header">
+          <div class="stop-number">${stopNum}</div>
+          <div class="stop-info">
+            <div class="stop-name">${job.nameInfo}</div>
+            <div class="stop-meta">
+              <span class="meta-badge badge-note">📋 One-off job</span>
+              ${job.jobDesc ? `<span class="meta-badge badge-note">${job.jobDesc}</span>` : ''}
+              ${actualPrice && status === 'done' ? `<span class="meta-badge badge-price">$${actualPrice}</span>` : ''}
+            </div>
+          </div>
+          <div class="stop-status-icon">${statusIcon}</div>
+        </div>
+        ${priceField}
+        ${actions}
+      </div>`;
+  });
+
+  main.innerHTML = html;
+  updateSummary();
+}
+
+// ── Schedule a Job panel ──────────────────────────────────────────────────
+function renderSchedulePanel(main) {
+  const jobsByDay = {};
+  DAYS.forEach(d => { jobsByDay[d] = state.scheduledJobs.filter(j => j.day === d); });
+  const hasJobs = state.scheduledJobs.length > 0;
+
+  const upcomingHtml = hasJobs
+    ? DAYS.map(d => {
+        const jobs = jobsByDay[d];
+        if (!jobs.length) return '';
+        return jobs.map(job => `
+          <div class="upcoming-job-card">
+            <div class="upcoming-day-badge">${job.scheduledDate || d.slice(0,3).toUpperCase()}</div>
+            <div class="upcoming-job-info">
+              <div class="upcoming-job-name">${job.nameInfo}</div>
+              ${job.jobDesc ? `<div class="upcoming-job-desc">${job.jobDesc}</div>` : ''}
+            </div>
+            <button class="upcoming-job-remove" onclick="removeScheduledJob('${job.id}')">×</button>
+          </div>`).join('');
+      }).join('')
+    : `<div class="no-upcoming"><div class="icon">📋</div>No upcoming jobs scheduled yet.</div>`;
+
+  main.innerHTML = `
+    <div class="day-header">
+      <div class="day-title">Schedule Job</div>
+      <span style="font-size:12px;color:var(--gray);font-weight:500;">One-off jobs</span>
+    </div>
+    <div class="schedule-job-panel">
+      <div class="schedule-job-form">
+        <div class="form-title">📞 Log an Upcoming Job</div>
+        <div class="schedule-field">
+          <label>Client Name or Address</label>
+          <input type="text" id="sj_name" placeholder="e.g. John Smith, 123 Main St, or 'call back guy'" autocomplete="off">
+        </div>
+        <div class="schedule-field">
+          <label>Assign to Day</label>
+          <select id="sj_day">
+            ${getUpcomingDayOptions().map(o => `<option value="${o.value}">${o.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="schedule-field">
+          <label>Job Details (optional)</label>
+          <textarea id="sj_desc" placeholder="e.g. irrigation repair, spring cleanup, estimate..."></textarea>
+        </div>
+        <button class="schedule-add-btn" onclick="addScheduledJob()">ADD TO SCHEDULE</button>
+      </div>
+      <div class="upcoming-section-label">Upcoming Jobs (${state.scheduledJobs.length})</div>
+      ${upcomingHtml}
+    </div>`;
+}
+
+function addScheduledJob() {
+  const nameInfo = document.getElementById('sj_name').value.trim();
+  if (!nameInfo) { showToast('Enter a name or address first!'); return; }
+  const raw = document.getElementById('sj_day').value;
+  const [dayName, isoDate] = raw.includes('||') ? raw.split('||') : [raw, ''];
+  const jobDesc = document.getElementById('sj_desc').value.trim();
+
+  // Format the scheduled date nicely for display
+  let scheduledDate = '';
+  if (isoDate) {
+    const d = new Date(isoDate + 'T12:00:00');
+    scheduledDate = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+  }
+
+  const job = {
+    id: Date.now().toString(),
+    day: dayName,
+    isoDate,
+    scheduledDate,
+    nameInfo, jobDesc,
+    createdDate: getTodayStr()
+  };
+  state.scheduledJobs.push(job);
+  saveState();
+  renderTabs();
+  renderSchedulePanel(document.getElementById('mainContent'));
+  showToast(`Added to ${dayName} ${scheduledDate ? '('+scheduledDate+')' : ''}!`);
+}
+
+function removeScheduledJob(id) {
+  state.scheduledJobs = state.scheduledJobs.filter(j => j.id !== id);
+  // Also clean up any stop state for this job
+  delete state.stopStates[`oneoff_${id}`];
+  saveState();
+  renderTabs();
+  if (state.activeDay === 'Schedule') {
+    renderSchedulePanel(document.getElementById('mainContent'));
+  } else {
+    renderDay(state.activeDay);
+  }
+}
+
+function markOneOffDone(id, day) {
+  const key = `oneoff_${id}`;
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key].status = 'done';
+  saveState();
+  renderDay(day);
+  const job = state.scheduledJobs.find(j => j.id === id);
+  if (job) showToast(`✓ ${job.nameInfo} done!`);
+}
+function markOneOffSkipped(id, day) {
+  const key = `oneoff_${id}`;
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key].status = 'skipped';
+  saveState();
+  renderDay(day);
+}
+function markOneOffPending(id, day) {
+  const key = `oneoff_${id}`;
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key].status = 'pending';
+  saveState();
+  renderDay(day);
+}
+function updateOneOffField(id, field, val) {
+  const key = `oneoff_${id}`;
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key][field] = field === 'actualPrice' ? parseFloat(val)||0 : val;
+  saveState();
+}
+
+// ── Monday flex ────────────────────────────────────────────────────────────
+function renderMonday(main) {
+  let entriesHtml = state.mondayEntries.map((entry, i) => `
+    <div class="monday-entry" id="monday_entry_${i}">
+      <div class="entry-field">
+        <label>Type</label>
+        <select onchange="updateMondayEntry(${i},'type',this.value)">
+          <option ${entry.type==='Client Job'?'selected':''}>Client Job</option>
+          <option ${entry.type==='Machine Maint.'?'selected':''}>Machine Maint.</option>
+          <option ${entry.type==='Trailer Maint.'?'selected':''}>Trailer Maint.</option>
+          <option ${entry.type==='Other'?'selected':''}>Other</option>
+        </select>
+      </div>
+      ${entry.type === 'Client Job' ? `
+      <div class="entry-field">
+        <label>Client</label>
+        <select onchange="updateMondayEntry(${i},'client',this.value)">
+          <option value="">Select client...</option>
+          ${ALL_CLIENTS.map(c => `<option ${entry.client===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>` : `
+      <div class="entry-field">
+        <label>Equipment / Detail</label>
+        <input type="text" placeholder="e.g. Mower blade replacement" value="${entry.client||''}"
+          onchange="updateMondayEntry(${i},'client',this.value)">
+      </div>`}
+      <div class="entry-field">
+        <label>Description</label>
+        <input type="text" placeholder="What did you do?" value="${entry.desc||''}"
+          onchange="updateMondayEntry(${i},'desc',this.value)">
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="entry-field" style="flex:1">
+          <label>Charge ($)</label>
+          <input type="number" placeholder="0.00" value="${entry.charge||''}" inputmode="decimal"
+            onchange="updateMondayEntry(${i},'charge',this.value)">
+        </div>
+        <div class="entry-field" style="flex:1">
+          <label>Materials ($)</label>
+          <input type="number" placeholder="0.00" value="${entry.materials||''}" inputmode="decimal"
+            onchange="updateMondayEntry(${i},'materials',this.value)">
+        </div>
+      </div>
+      <button class="monday-remove" onclick="removeMondayEntry(${i})">✕ Remove</button>
+    </div>
+  `).join('');
+
+  // Build one-off jobs section for Monday
+  const mondayOneOffs = state.scheduledJobs.filter(j => j.day === 'Monday');
+  let oneOffHtml = '';
+  if (mondayOneOffs.length > 0) {
+    oneOffHtml = mondayOneOffs.map(job => {
+      const key = `oneoff_${job.id}`;
+      const ss = state.stopStates[key] || {};
+      const status = ss.status || 'pending';
+      const actualPrice = ss.actualPrice || '';
+      const notes = ss.notes || '';
+      let cardClass = status === 'done' ? 'done' : status === 'skipped' ? 'skipped' : 'oneoff';
+      let statusIcon = status === 'done' ? '✅' : status === 'skipped' ? '⏭️' : '📋';
+      let priceField = status === 'pending' ? `
+        <div style="padding:0 16px 10px;display:flex;gap:10px;align-items:center;border-top:1px solid var(--gray-light);margin-top:4px;padding-top:10px;">
+          <div class="detail-label" style="font-size:11px;font-weight:600;color:var(--gray);width:60px;text-transform:uppercase;">Price</div>
+          <input type="number" class="detail-input price-input" placeholder="$0.00" value="${actualPrice}"
+            step="0.01" inputmode="decimal"
+            onchange="updateOneOffField('${job.id}','actualPrice',this.value)">
+          <div class="detail-label" style="font-size:11px;font-weight:600;color:var(--gray);width:50px;text-transform:uppercase;">Notes</div>
+          <input type="text" class="detail-input" placeholder="Optional" value="${notes}"
+            onchange="updateOneOffField('${job.id}','notes',this.value)">
+        </div>` : '';
+      let actions = status === 'pending'
+        ? `<div class="stop-actions">
+            <button class="btn btn-done" onclick="markOneOffDone('${job.id}','Monday')">✓ Done</button>
+            <button class="btn btn-skip" onclick="markOneOffSkipped('${job.id}','Monday')">Skip</button>
+           </div>`
+        : `<div class="stop-actions">
+            <button class="btn btn-undo" onclick="markOneOffPending('${job.id}','Monday')">↩ Undo</button>
+            ${status === 'done' ? `<button class="btn btn-details" style="font-size:12px;flex:0.5" onclick="removeScheduledJob('${job.id}')">✕ Remove</button>` : ''}
+           </div>`;
+      return `
+        <div class="stop-card ${cardClass}">
+          <div class="stop-header">
+            <div class="stop-number">📋</div>
+            <div class="stop-info">
+              <div class="stop-name">${job.nameInfo}</div>
+              <div class="stop-meta">
+                <span class="meta-badge badge-note">One-off job</span>
+                ${job.scheduledDate ? `<span class="meta-badge badge-biweek">${job.scheduledDate}</span>` : ''}
+                ${job.jobDesc ? `<span class="meta-badge badge-note">${job.jobDesc}</span>` : ''}
+                ${actualPrice && status === 'done' ? `<span class="meta-badge badge-price">$${actualPrice}</span>` : ''}
+              </div>
+            </div>
+            <div class="stop-status-icon">${statusIcon}</div>
+          </div>
+          ${priceField}
+          ${actions}
+        </div>`;
+    }).join('');
+  }
+
+  main.innerHTML = `
+    <div class="day-header">
+      <div class="day-title">Monday</div>
+      <span style="font-size:12px;color:var(--gray);font-weight:500;">Flex Day — ${getRouteDayDate('Monday')}</span>
+    </div>
+    <div class="monday-section">
+      ${oneOffHtml}
+      <button class="monday-add-btn" onclick="addMondayEntry('Client Job')">+ Add Client Job</button>
+      <button class="monday-add-btn" onclick="addMondayEntry('Machine Maint.')" style="border-color:var(--gray);color:var(--gray);">+ Machine / Trailer Maintenance</button>
+      ${entriesHtml}
+    </div>`;
+}
+
+function addMondayEntry(type) {
+  state.mondayEntries.push({ type, client:'', desc:'', charge:'', materials:'', billable:'Yes' });
+  saveState();
+  renderDay('Monday');
+}
+function removeMondayEntry(i) {
+  state.mondayEntries.splice(i, 1);
+  saveState();
+  renderDay('Monday');
+}
+function updateMondayEntry(i, field, val) {
+  state.mondayEntries[i][field] = val;
+  saveState();
+}
+
+// ── Stop actions ──────────────────────────────────────────────────────────
+function markDone(day, name, idx) {
+  const key = stopKey(day, name, idx);
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key].status = 'done';
+  saveState();
+  renderDay(day);
+  showToast(`✓ ${name} done!`);
+}
+function markSkipped(day, name, idx) {
+  const key = stopKey(day, name, idx);
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key].status = 'skipped';
+  saveState();
+  renderDay(day);
+}
+function markPending(day, name, idx) {
+  const key = stopKey(day, name, idx);
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key].status = 'pending';
+  saveState();
+  renderDay(day);
+}
+function toggleDetails(day, name, idx) {
+  const key = stopKey(day, name, idx);
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key].detailsOpen = !state.stopStates[key].detailsOpen;
+  saveState();
+  renderDay(day);
+}
+function updateStopField(day, name, idx, field, val) {
+  const key = stopKey(day, name, idx);
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  state.stopStates[key][field] = field === 'actualPrice' || field === 'materials' ? parseFloat(val)||0 : val;
+  saveState();
+  updateSummary();
+}
+function addExtraWork(day, name, idx) {
+  const key = stopKey(day, name, idx);
+  if (!state.stopStates[key]) state.stopStates[key] = {};
+  if (!state.stopStates[key].extraWork) state.stopStates[key].extraWork = [];
+  state.stopStates[key].extraWork.push({ service: 'Fertilize', price: '' });
+  saveState();
+  renderDay(day);
+}
+function removeExtraWork(day, name, idx, ei) {
+  const key = stopKey(day, name, idx);
+  state.stopStates[key].extraWork.splice(ei, 1);
+  saveState();
+  renderDay(day);
+}
+function updateExtraWork(day, name, idx, ei, field, val) {
+  const key = stopKey(day, name, idx);
+  state.stopStates[key].extraWork[ei][field] = val;
+  saveState();
+  updateSummary();
+}
+
+
+function toggleWedWeek() {
+  state.wedWeek = state.wedWeek === 'A' ? 'B' : 'A';
+  renderDay('Wednesday');
+}
+
+// ── Summary ───────────────────────────────────────────────────────────────
+function updateSummary() {
+  const day = state.activeDay;
+  if (day === 'Schedule') {
+    document.getElementById('doneCount').textContent = state.scheduledJobs.length;
+    document.getElementById('billTotal').textContent = '—';
+    return;
+  }
+  if (day === 'Monday') {
+    const total = state.mondayEntries.reduce((s,e) => s + (parseFloat(e.charge)||0), 0);
+    document.getElementById('doneCount').textContent = state.mondayEntries.length;
+    document.getElementById('billTotal').textContent = '$' + total.toFixed(0);
+    return;
+  }
+  const stops = getStops(day);
+  let done = 0, total = 0;
+  stops.forEach((stop, idx) => {
+    const key = stopKey(day, stop.name, idx);
+    const ss = state.stopStates[key] || {};
+    if (ss.status === 'done') {
+      done++;
+      if (stop.billing) {
+        const price = ss.actualPrice !== undefined ? ss.actualPrice : stop.price;
+        total += parseFloat(price) || 0;
+        (ss.extraWork || []).forEach(ew => { total += parseFloat(ew.price) || 0; });
+      }
+    }
+  });
+  // Count completed one-off jobs too
+  state.scheduledJobs.filter(j => j.day === day).forEach(job => {
+    const ss = state.stopStates[`oneoff_${job.id}`] || {};
+    if (ss.status === 'done') done++;
+  });
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('billTotal').textContent = '$' + total.toFixed(0);
+}
+
+// ── Sync to Google Sheets ─────────────────────────────────────────────────
+async function syncToSheets() {
+  const btn = document.getElementById('syncBtn');
+  const day = state.activeDay;
+  const today = getTodayStr();
+
+  btn.textContent = 'SAVING...';
+  btn.className = 'sync-btn syncing';
+
+  const rows = [];
+
+  if (day === 'Monday') {
+    state.mondayEntries.forEach(entry => {
+      if (entry.client || entry.desc) {
+        rows.push([today, entry.client||entry.type, entry.type,
+          parseFloat(entry.charge)||0, parseFloat(entry.materials)||0,
+          entry.desc || '', getDayOfWeek(), getYear(), entry.billable||'Yes']);
+      }
+    });
+    // One-off jobs on Monday
+    state.scheduledJobs.filter(j => j.day === 'Monday').forEach(job => {
+      const ss = state.stopStates[`oneoff_${job.id}`] || {};
+      if (ss.status === 'done') {
+        rows.push([today, job.nameInfo, job.jobDesc || 'One-off Job',
+          parseFloat(ss.actualPrice)||0, '',
+          ss.notes || '', getDayOfWeek(), getYear(), 'Yes']);
+      }
+    });
+  } else {
+    const stops = getStops(day);
+    stops.forEach((stop, idx) => {
+      const key = stopKey(day, stop.name, idx);
+      const ss = state.stopStates[key] || {};
+      if (ss.status === 'done' && stop.billing) {
+        const price = ss.actualPrice !== undefined ? ss.actualPrice : stop.price;
+        rows.push([
+          today, stop.name, stop.service,
+          parseFloat(price)||0, '',
+          ss.notes || '', getDayOfWeek(), getYear(), 'No'
+        ]);
+        // Extra work as separate line items
+        (ss.extraWork || []).forEach(ew => {
+          if (ew.service && ew.price) {
+            rows.push([
+              today, stop.name, ew.service,
+              parseFloat(ew.price)||0, '',
+              '', getDayOfWeek(), getYear(), 'No'
+            ]);
+          }
+        });
+      }
+    });
+    // One-off jobs on route days
+    state.scheduledJobs.filter(j => j.day === day).forEach(job => {
+      const ss = state.stopStates[`oneoff_${job.id}`] || {};
+      if (ss.status === 'done') {
+        rows.push([today, job.nameInfo, job.jobDesc || 'One-off Job',
+          parseFloat(ss.actualPrice)||0, '',
+          ss.notes || '', getDayOfWeek(), getYear(), 'Yes']);
+      }
+    });
+  }
+
+  if (rows.length === 0) {
+    showToast('Nothing to save yet!');
+    btn.textContent = 'SAVE DAY';
+    btn.className = 'sync-btn';
+    return;
+  }
+
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwLdVlncI7_P3u7q_XwyvoVdfm9uyJHtuPLM1nrdszKMXh8RtWpqhGqBeBQHwcsLDjK/exec';
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows })
+    });
+
+    // no-cors means we can't read the response body, but if no exception thrown it worked
+    btn.textContent = `✓ SAVED ${rows.length} JOB${rows.length>1?'S':''}`;
+    btn.className = 'sync-btn success';
+    showToast(`${rows.length} job${rows.length>1?'s':''} sent to Google Sheet!`);
+    setTimeout(() => {
+      btn.textContent = 'SAVE DAY';
+      btn.className = 'sync-btn';
+    }, 3000);
+
+  } catch(err) {
+    // Save locally as backup on error
+    const savedRows = JSON.parse(localStorage.getItem('me_pending_rows') || '[]');
+    savedRows.push(...rows.map(r => ({date: today, day, data: r})));
+    localStorage.setItem('me_pending_rows', JSON.stringify(savedRows));
+
+    btn.textContent = '✓ SAVED LOCALLY';
+    btn.className = 'sync-btn success';
+    showToast('Saved locally — check connection');
+    setTimeout(() => {
+      btn.textContent = 'SAVE DAY';
+      btn.className = 'sync-btn';
+    }, 3000);
+  }
+}
+
+function getDayOfWeek() {
+  return new Date().toLocaleDateString('en-US', {month:'long'});
+}
+function getYear() {
+  return new Date().getFullYear();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
