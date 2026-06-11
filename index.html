@@ -849,7 +849,7 @@
 
 <div class="app-header">
   <div class="header-top">
-    <div class="app-title">🌿 Manicured Estates <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--gray);letter-spacing:0.5px;vertical-align:middle;">v2.1</span></div>
+    <div class="app-title">🌿 Manicured Estates <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--gray);letter-spacing:0.5px;vertical-align:middle;">v2.2</span></div>
     <div class="header-date" id="headerDate"></div>
   </div>
   <div class="day-tabs" id="dayTabs"></div>
@@ -882,9 +882,7 @@ const APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbwlp5l3ielbyo1S6MNo
 let SCHEDULE = {
   Monday:    { type: 'flex' },
   Tuesday:   { type: 'route', stops: [] },
-  Wednesday: { type: 'split',
-               weekA: { label: 'WEEK A', stops: [] },
-               weekB: { label: 'WEEK B', stops: [] } },
+  Wednesday: { type: 'route', stops: [] },
   Thursday:  { type: 'route', stops: [] },
   Friday:    { type: 'route', stops: [] },
 };
@@ -930,8 +928,7 @@ function addClientOption(name) {
 function buildScheduleFromRegistry(clients) {
   // Reset day stops
   SCHEDULE.Tuesday.stops = [];
-  SCHEDULE.Wednesday.weekA.stops = [];
-  SCHEDULE.Wednesday.weekB.stops = [];
+  SCHEDULE.Wednesday.stops = [];
   SCHEDULE.Thursday.stops = [];
   SCHEDULE.Friday.stops = [];
   delete SCHEDULE.Thursday.biweekClient;
@@ -958,34 +955,18 @@ function buildScheduleFromRegistry(clients) {
     return String(a.legalName || '').localeCompare(String(b.legalName || ''));
   }
 
+  // All route days are flat lists now (Wednesday's old A/B split retired in
+  // v2.2 — biweek clients just carry a "2-week" badge on their card).
   const routeDays = ['Tuesday','Wednesday','Thursday','Friday'];
   routeDays.forEach(day => {
     const dayClients = clients.filter(c => c.day === day).sort(bySort);
-    if (day === 'Wednesday') {
-      dayClients.forEach(c => {
-        const stop = toStop(c);
-        // Weekly clients appear in BOTH weeks
-        if (stop.freq === 'weekly') {
-          SCHEDULE.Wednesday.weekA.stops.push(stop);
-          SCHEDULE.Wednesday.weekB.stops.push(stop);
-        } else if ((c.weekParity || '').toUpperCase() === 'A') {
-          SCHEDULE.Wednesday.weekA.stops.push(stop);
-        } else if ((c.weekParity || '').toUpperCase() === 'B') {
-          SCHEDULE.Wednesday.weekB.stops.push(stop);
-        } else {
-          // Biweek client with no parity assigned — default to week A
-          SCHEDULE.Wednesday.weekA.stops.push(stop);
-        }
-      });
-    } else {
-      dayClients.forEach(c => {
-        SCHEDULE[day].stops.push(toStop(c));
-        // Thursday tracks its single biweek client for the "every other week" label
-        if (day === 'Thursday' && c.frequency === 'biweek' && !SCHEDULE.Thursday.biweekClient) {
-          SCHEDULE.Thursday.biweekClient = c.legalName;
-        }
-      });
-    }
+    dayClients.forEach(c => {
+      SCHEDULE[day].stops.push(toStop(c));
+      // Thursday tracks its single biweek client for the "every other week" label
+      if (day === 'Thursday' && c.frequency === 'biweek' && !SCHEDULE.Thursday.biweekClient) {
+        SCHEDULE.Thursday.biweekClient = c.legalName;
+      }
+    });
   });
 }
 
@@ -1113,7 +1094,6 @@ let state = {
   activeDay: null,
   stopStates: {},
   mondayEntries: [],
-  wedWeek: null,
   scheduledJobs: [],
   removedClients: [],
   newClients: [],
@@ -1127,14 +1107,6 @@ function getToday() {
   const d = new Date();
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   return days[d.getDay()];
-}
-
-function getWedWeek() {
-  // Week A = odd ISO week numbers, Week B = even
-  const d = new Date();
-  const startOfYear = new Date(d.getFullYear(), 0, 1);
-  const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
-  return weekNum % 2 === 1 ? 'A' : 'B';
 }
 
 function formatDate(d) {
@@ -1238,10 +1210,6 @@ function getStops(day) {
   const overrides = state.priceOverrides || {};
   let stops = [];
   if (sched.type === 'route') stops = [...sched.stops];
-  else if (sched.type === 'split') {
-    const week = state.wedWeek || getWedWeek();
-    stops = week === 'A' ? [...sched.weekA.stops] : [...sched.weekB.stops];
-  }
   // Apply price overrides to hardcoded stops
   stops = stops.map(s => {
     if (overrides[s.name] !== undefined) {
@@ -1269,7 +1237,6 @@ function getStops(day) {
 // ── Init ──────────────────────────────────────────────────────────────────
 async function init() {
   const today = getToday();
-  state.wedWeek = getWedWeek();
   state.activeDay = DAYS.includes(today) ? today : 'Tuesday';
 
   // Load cached registry synchronously so first render has route data
@@ -1436,12 +1403,6 @@ function renderDay(day) {
   }
 
   const stops = getStops(day);
-  let wedLabel = '';
-  if (day === 'Wednesday') {
-    const week = state.wedWeek || getWedWeek();
-    wedLabel = `<span class="week-badge">WEEK ${week} — ${week === 'A' ? 'MOOSE GROUP' : 'WINTER GROUP'}</span>
-      <button onclick="toggleWedWeek()" style="background:none;border:none;color:var(--gray);font-size:12px;cursor:pointer;margin-left:6px;">switch</button>`;
-  }
 
   const doneCount = stops.filter((_,i) => (state.stopStates[stopKey(day,stops[i].name,i)]?.status === 'done')).length;
   const pct = stops.length ? Math.round(doneCount/stops.length*100) : 0;
@@ -1457,7 +1418,6 @@ function renderDay(day) {
       <div class="day-title">${day}</div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span style="font-size:12px;color:${isPast ? 'var(--gray)' : 'var(--gray)'};font-weight:600;">${getRouteDayDate(day)}</span>
-        <div>${wedLabel}</div>
       </div>
     </div>
     <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -1638,12 +1598,6 @@ function renderClientsPanel(main) {
     if (!sched || sched.type === 'flex') { routeByDay[day] = []; return; }
     let stops = [];
     if (sched.type === 'route') stops = [...sched.stops];
-    if (sched.type === 'split') {
-      stops = [...new Map([
-        ...sched.weekA.stops.map(s => [s.name, s]),
-        ...sched.weekB.stops.map(s => [s.name, s])
-      ]).values()];
-    }
     // Apply price overrides
     stops = stops.map(s => overrides[s.name] !== undefined ? { ...s, price: overrides[s.name] } : s);
     // Include new clients assigned to this day
@@ -1671,7 +1625,13 @@ function renderClientsPanel(main) {
       <div class="client-manage-card" style="flex-wrap:wrap;">
         <div class="client-manage-info" style="flex:1;min-width:0;">
           <div class="client-manage-name">${stop.name}</div>
-          <div class="client-manage-day">${stop.freq === 'biweek' ? 'Every 2 weeks' : 'Weekly'}</div>
+          <button onclick="toggleClientFreq('${escapedName}','${stop.freq}')" style="
+            background:${stop.freq === 'biweek' ? 'var(--biweek-bg)' : 'transparent'};
+            border:1px solid ${stop.freq === 'biweek' ? 'var(--biweek-border)' : 'var(--gray-light)'};
+            color:${stop.freq === 'biweek' ? 'var(--biweek-border)' : 'var(--gray)'};
+            border-radius:8px;font-size:11px;font-weight:600;padding:3px 8px;cursor:pointer;
+            font-family:'DM Sans',sans-serif;margin-top:2px;">
+            ${stop.freq === 'biweek' ? '🔵 Every 2 weeks — tap to make weekly' : 'Weekly — tap for 2-week'}</button>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
           <span style="font-size:11px;color:var(--gray);font-weight:600;">MTE $</span>
@@ -2483,9 +2443,21 @@ function updateExtraWork(day, name, idx, ei, field, val) {
 }
 
 
-function toggleWedWeek() {
-  state.wedWeek = state.wedWeek === 'A' ? 'B' : 'A';
-  renderDay('Wednesday');
+// Toggle a client between weekly and every-2-weeks. Permanent — writes
+// the frequency field to ClientsRegistry (weekParity cleared; the A/B
+// split was retired in v2.2).
+async function toggleClientFreq(name, currentFreq) {
+  const newFreq = currentFreq === 'biweek' ? 'weekly' : 'biweek';
+  const label = newFreq === 'biweek' ? 'every 2 weeks' : 'weekly';
+  if (!confirm(`Set ${name} to ${label}?`)) return;
+  showToast(`Updating ${name}...`);
+  await registryWrite({
+    action: 'updateRegistryClient',
+    legalName: name,
+    patch: { frequency: newFreq, weekParity: '' }
+  });
+  rerenderAfterRegistryChange();
+  showToast(`${name} is now ${label}`);
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────
@@ -2831,6 +2803,7 @@ async function syncToSheets() {
 
     btn.textContent = `✓ SAVED ${rows.length} JOB${rows.length>1?'S':''}`;
     btn.className = 'sync-btn success';
+    launchFireworks();
     showToast(`${rows.length} job${rows.length>1?'s':''} sent to Google Sheet!`);
     setTimeout(() => {
       btn.textContent = 'SAVE DAY';
@@ -2845,6 +2818,7 @@ async function syncToSheets() {
 
     btn.textContent = '✓ SAVED LOCALLY';
     btn.className = 'sync-btn success';
+    launchFireworks();
     showToast('Saved locally — check connection');
     setTimeout(() => {
       btn.textContent = 'SAVE DAY';
@@ -2883,6 +2857,76 @@ function getDayOfWeek() {
 }
 function getYear() {
   return new Date().getFullYear();
+}
+
+// ── Fireworks (SAVE DAY celebration) ──────────────────────────────────────
+// Full-screen canvas particle burst, ~2.5s, removes itself when done.
+// Pure JS — no libraries, taps pass through (pointer-events:none).
+function launchFireworks() {
+  if (document.getElementById('fwCanvas')) return; // already running
+  const canvas = document.createElement('canvas');
+  canvas.id = 'fwCanvas';
+  canvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;pointer-events:none;';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  const COLORS = ['#FFD700','#7AB648','#E8640A','#4FC3F7','#FF6B81','#C8A951','#FFFFFF'];
+  const GRAVITY = 0.045;
+  let particles = [];
+  let bursts = 0;
+  const MAX_BURSTS = 6;
+
+  function burst() {
+    const x = canvas.width * (0.15 + Math.random() * 0.7);
+    const y = canvas.height * (0.15 + Math.random() * 0.45);
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const count = 36 + Math.floor(Math.random() * 24);
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.2;
+      const speed = 2 + Math.random() * 3.5;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        decay: 0.012 + Math.random() * 0.012,
+        size: 2 + Math.random() * 2,
+        color: Math.random() < 0.3 ? COLORS[Math.floor(Math.random() * COLORS.length)] : color,
+      });
+    }
+    bursts++;
+    if (bursts < MAX_BURSTS) setTimeout(burst, 280 + Math.random() * 250);
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter(p => p.life > 0);
+    if (!particles.length && bursts >= MAX_BURSTS) {
+      canvas.remove();
+      return;
+    }
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += GRAVITY;
+      p.vx *= 0.985;
+      p.life -= p.decay;
+      ctx.globalAlpha = Math.max(p.life, 0);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+
+  burst();
+  requestAnimationFrame(frame);
+  // Hard stop after 6s no matter what (battery-friendly failsafe)
+  setTimeout(() => { const c = document.getElementById('fwCanvas'); if (c) c.remove(); }, 6000);
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────
