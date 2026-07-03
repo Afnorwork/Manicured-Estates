@@ -843,13 +843,104 @@
   .empty-day .empty-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-day h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
   .empty-day p { font-size: 14px; line-height: 1.5; }
+
+  /* ── History tab ── */
+  .history-controls {
+    padding: 4px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-select {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--gray-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    background: var(--white);
+    color: var(--text);
+  }
+  .history-month-head {
+    padding: 14px 20px 4px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 17px;
+    letter-spacing: 1px;
+    color: var(--green-med);
+  }
+  .history-charge {
+    margin: 6px 16px;
+    border-radius: 14px;
+    border: 2px solid var(--gray-light);
+    background: #fff;
+    padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    cursor: pointer;
+  }
+  .history-charge.editing { border-color: var(--gold); cursor: default; }
+  .hc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .hc-service { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
+  .hc-amount { font-size: 16px; font-weight: 700; color: var(--green-dark); flex-shrink: 0; }
+  .hc-sub { margin-top: 3px; font-size: 12px; color: var(--gray); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .hc-notes { margin-top: 4px; font-size: 13px; color: #8B6914; font-style: italic; }
+  .history-total {
+    margin: 10px 16px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--green-pale);
+    border: 1.5px solid var(--green-light);
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--green-dark);
+  }
+  .hc-edit-field { margin-top: 8px; }
+  .hc-edit-field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .hc-edit-field input, .hc-edit-field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    margin-top: 4px;
+    background: var(--white);
+    color: var(--text);
+  }
+  .hc-edit-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .hc-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .hc-btn:active { transform: scale(0.97); }
+  .hc-btn-save { background: var(--green-med); color: white; }
+  .hc-btn-delete { background: var(--red); color: white; flex: 0.8; }
+  .hc-btn-cancel { background: var(--gray-light); color: var(--gray); flex: 0.6; }
 </style>
 </head>
 <body>
 
 <div class="app-header">
   <div class="header-top">
-    <div class="app-title">🌿 Manicured Estates <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--gray);letter-spacing:0.5px;vertical-align:middle;">v2.2</span></div>
+    <div class="app-title">🌿 Manicured Estates <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--gray);letter-spacing:0.5px;vertical-align:middle;">v2.3</span></div>
     <div class="header-date" id="headerDate"></div>
   </div>
   <div class="day-tabs" id="dayTabs"></div>
@@ -1369,7 +1460,10 @@ function renderTabs() {
   const clientsActive = state.activeDay === 'Clients';
   const clientsButton = `<button class="day-tab clients-tab ${clientsActive ? 'active' : ''}"
     onclick="switchDay('Clients')">⚙️ Clients</button>`;
-  container.innerHTML = dayButtons + schedButton + clientsButton;
+  const historyActive = state.activeDay === 'History';
+  const historyButton = `<button class="day-tab history-tab ${historyActive ? 'active' : ''}"
+    onclick="switchDay('History')">📜 History</button>`;
+  container.innerHTML = dayButtons + schedButton + clientsButton + historyButton;
 }
 
 function switchDay(day) {
@@ -1392,6 +1486,12 @@ function renderDay(day) {
 
   if (day === 'Clients') {
     renderClientsPanel(main);
+    updateSummary();
+    return;
+  }
+
+  if (day === 'History') {
+    renderHistoryPanel(main);
     updateSummary();
     return;
   }
@@ -2468,7 +2568,7 @@ function updateSummary() {
     document.getElementById('billTotal').textContent = '—';
     return;
   }
-  if (day === 'Clients') {
+  if (day === 'Clients' || day === 'History') {
     document.getElementById('doneCount').textContent = '—';
     document.getElementById('billTotal').textContent = '—';
     return;
@@ -2859,9 +2959,328 @@ function getYear() {
   return new Date().getFullYear();
 }
 
+// ── History tab (v2.3) ────────────────────────────────────────────────────
+// Select a client → pull their full charge history from the Daily Log via
+// getClientHistory (fetched once; the range dropdown filters locally).
+// Tapping a charge opens an edit form; Save/Delete write straight to the
+// Google Sheet via updateLogCharge/deleteLogCharge, then history is
+// re-fetched to confirm the sheet actually changed.
+
+const HISTORY_RANGES = [
+  { key: 'month', label: 'Last month',    days: 31 },
+  { key: '3mo',   label: 'Last 3 months', days: 92 },
+  { key: '6mo',   label: 'Last 6 months', days: 183 },
+  { key: 'all',   label: 'All history',   days: Infinity },
+];
+
+// Not persisted — resets each app load.
+let historyState = {
+  client: '',
+  range: 'month',
+  loading: false,
+  error: '',
+  data: null,        // getClientHistory response
+  editingRow: null,  // sheet row currently being edited
+  showPayments: false,
+};
+
+function escHtml(s) {
+  return String(s === undefined || s === null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function historyChargeDate(c) {
+  if (c.rawDate) {
+    const d = new Date(c.rawDate);
+    if (!isNaN(d)) return d;
+  }
+  if (c.month && c.year) {
+    const d = new Date(c.month + ' 15, ' + c.year);
+    if (!isNaN(d)) return d;
+  }
+  return null;
+}
+
+function historyVisibleCharges() {
+  const h = historyState;
+  if (!h.data || !Array.isArray(h.data.charges)) return [];
+  const range = HISTORY_RANGES.find(r => r.key === h.range) || HISTORY_RANGES[0];
+  const cutoff = range.days === Infinity ? null : new Date(Date.now() - range.days * 24 * 60 * 60 * 1000);
+  // Keep the absolute index so edit handlers can find the charge after filtering
+  return h.data.charges
+    .map((c, i) => ({ c, i, d: historyChargeDate(c) }))
+    .filter(x => !cutoff || (x.d && x.d >= cutoff))
+    .sort((a, b) => (b.d ? b.d.getTime() : 0) - (a.d ? a.d.getTime() : 0));
+}
+
+function renderHistoryPanel(main) {
+  const h = historyState;
+  const clientOptions = ['<option value="">— Select a client —</option>']
+    .concat(ALL_CLIENTS.map(n =>
+      `<option value="${escHtml(n)}" ${n === h.client ? 'selected' : ''}>${escHtml(n)}</option>`))
+    .join('');
+  const rangeOptions = HISTORY_RANGES.map(r =>
+    `<option value="${r.key}" ${r.key === h.range ? 'selected' : ''}>${r.label}</option>`).join('');
+
+  let body = '';
+
+  if (!h.client) {
+    body = `<div class="empty-day"><div class="empty-icon">📜</div>
+      <h3>Work History</h3><p>Pick a client above to see everything logged for them — and fix any charges that need it.</p></div>`;
+  } else if (h.loading) {
+    body = `<div class="empty-day"><div class="empty-icon">⏳</div>
+      <h3>Loading…</h3><p>Pulling ${escHtml(h.client)}'s history from the Google Sheet.</p></div>`;
+  } else if (h.error) {
+    body = `<div class="empty-day"><div class="empty-icon">⚠️</div>
+      <h3>Couldn't load history</h3><p>${escHtml(h.error)}</p>
+      <button class="monday-add-btn" style="margin-top:14px" onclick="historySelectClient('${escHtml(h.client)}')">↺ Try Again</button></div>`;
+  } else if (h.data) {
+    const visible = historyVisibleCharges();
+    let total = 0, materialsTotal = 0;
+    let cards = '';
+    let lastMonthHead = '';
+    visible.forEach(x => {
+      const c = x.c;
+      total += c.amount || 0;
+      materialsTotal += c.materials || 0;
+      const monthHead = (c.month || '?') + ' ' + (c.year || '');
+      if (monthHead !== lastMonthHead) {
+        cards += `<div class="history-month-head">${escHtml(monthHead)}</div>`;
+        lastMonthHead = monthHead;
+      }
+      cards += (h.editingRow === c.row) ? historyEditCard(c, x.i) : historyChargeCard(c, x.i);
+    });
+
+    const totalBar = visible.length ? `
+      <div class="history-total">
+        <span>${visible.length} charge${visible.length > 1 ? 's' : ''}</span>
+        <span>$${total.toFixed(2)}${materialsTotal > 0 ? ' + $' + materialsTotal.toFixed(2) + ' materials' : ''}</span>
+      </div>` : `
+      <div class="empty-day"><div class="empty-icon">🍃</div>
+        <h3>Nothing in this range</h3><p>No charges found for ${escHtml(h.client)} here — try a longer time range above.</p></div>`;
+
+    // Payments cross-check (filtered to the same range)
+    const range = HISTORY_RANGES.find(r => r.key === h.range) || HISTORY_RANGES[0];
+    const cutoff = range.days === Infinity ? null : new Date(Date.now() - range.days * 24 * 60 * 60 * 1000);
+    const pays = (h.data.payments || []).filter(p => {
+      if (!cutoff) return true;
+      const d = historyChargeDate(p);
+      return d && d >= cutoff;
+    });
+    let paySection = '';
+    if (pays.length) {
+      const payTotal = pays.reduce((s, p) => s + (p.amount || 0), 0);
+      paySection = `
+        <div style="margin:14px 16px 4px;">
+          <button class="monday-add-btn" style="margin-bottom:8px;border-color:var(--biweek-border);color:#1a5276;"
+            onclick="historyState.showPayments=!historyState.showPayments;renderHistoryPanel(document.getElementById('mainContent'))">
+            💰 ${pays.length} payment${pays.length > 1 ? 's' : ''} · $${payTotal.toFixed(2)} ${h.showPayments ? '▲' : '▼'}
+          </button>
+        </div>`;
+      if (h.showPayments) {
+        paySection += pays.map(p => `
+          <div class="history-charge" style="cursor:default;background:var(--biweek-bg);border-color:var(--biweek-border);">
+            <div class="hc-top">
+              <div class="hc-service">💰 ${escHtml(p.method || 'Payment')}</div>
+              <div class="hc-amount" style="color:#1a5276">$${(p.amount || 0).toFixed(2)}</div>
+            </div>
+            <div class="hc-sub"><span>${escHtml(p.date)} · ${escHtml(p.year || '')}</span>${p.notes ? `<span>${escHtml(p.notes)}</span>` : ''}</div>
+          </div>`).join('');
+      }
+    }
+
+    body = totalBar + cards + paySection + `
+      <div style="padding:10px 20px 0;font-size:11px;color:var(--gray);text-align:center;">
+        Tap a charge to edit it — changes write straight to the Google Sheet.
+      </div>`;
+  }
+
+  main.innerHTML = `
+    <div class="day-header">
+      <div class="day-title">History</div>
+    </div>
+    <div class="history-controls">
+      <select class="history-select" onchange="historySelectClient(this.value)">${clientOptions}</select>
+      ${h.client ? `<select class="history-select" onchange="historySetRange(this.value)">${rangeOptions}</select>` : ''}
+    </div>
+    ${body}
+  `;
+}
+
+function historyChargeCard(c, i) {
+  const oneOff = String(c.billable || '').trim().toLowerCase() === 'yes';
+  return `
+    <div class="history-charge" onclick="historyStartEdit(${i})">
+      <div class="hc-top">
+        <div class="hc-service">${escHtml(c.service || '(no service)')}</div>
+        <div class="hc-amount">$${(c.amount || 0).toFixed(2)}</div>
+      </div>
+      <div class="hc-sub">
+        <span>${escHtml(c.date)} · ${escHtml(c.year || '')}</span>
+        ${c.materials > 0 ? `<span class="meta-badge badge-price">+$${c.materials.toFixed(2)} materials</span>` : ''}
+        ${oneOff ? `<span class="meta-badge badge-cash">one-off</span>` : ''}
+        ${c.clientAsLogged && c.clientAsLogged !== historyState.client ? `<span class="meta-badge badge-note">as "${escHtml(c.clientAsLogged)}"</span>` : ''}
+      </div>
+      ${c.notes ? `<div class="hc-notes">${escHtml(c.notes)}</div>` : ''}
+    </div>`;
+}
+
+function historyEditCard(c, i) {
+  return `
+    <div class="history-charge editing">
+      <div class="hc-sub" style="margin:0 0 2px;"><span>✏️ Editing — ${escHtml(c.date)} · ${escHtml(c.year || '')} (sheet row ${c.row})</span></div>
+      <div class="hc-edit-field">
+        <label>Service</label>
+        <input type="text" id="histEditService" value="${escHtml(c.service)}">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="hc-edit-field" style="flex:1">
+          <label>Amount $</label>
+          <input type="number" inputmode="decimal" step="0.01" id="histEditAmount" value="${c.amount || 0}">
+        </div>
+        <div class="hc-edit-field" style="flex:1">
+          <label>Materials $</label>
+          <input type="number" inputmode="decimal" step="0.01" id="histEditMaterials" value="${c.materials || 0}">
+        </div>
+      </div>
+      <div class="hc-edit-field">
+        <label>Notes</label>
+        <input type="text" id="histEditNotes" value="${escHtml(c.notes)}">
+      </div>
+      <div class="hc-edit-actions">
+        <button class="hc-btn hc-btn-save" onclick="historySaveEdit(${i})">✓ Save</button>
+        <button class="hc-btn hc-btn-delete" onclick="historyDeleteCharge(${i})">🗑 Delete</button>
+        <button class="hc-btn hc-btn-cancel" onclick="historyCancelEdit()">Cancel</button>
+      </div>
+    </div>`;
+}
+
+async function historySelectClient(name) {
+  const h = historyState;
+  h.client = name;
+  h.data = null;
+  h.error = '';
+  h.editingRow = null;
+  h.showPayments = false;
+  const main = document.getElementById('mainContent');
+  if (!name) { renderHistoryPanel(main); return; }
+  h.loading = true;
+  renderHistoryPanel(main);
+  await historyFetch();
+}
+
+async function historyFetch() {
+  const h = historyState;
+  const name = h.client;
+  try {
+    const res = await fetch(APPS_SCRIPT + '?action=getClientHistory&client=' + encodeURIComponent(name),
+      { method: 'GET', mode: 'cors' });
+    const data = await res.json();
+    if (data && data.success) {
+      h.data = data;
+      h.error = '';
+    } else {
+      h.error = (data && data.error) || 'The Apps Script returned an error.';
+    }
+  } catch (e) {
+    h.error = 'Network problem — check your connection and try again.';
+  }
+  h.loading = false;
+  // Only re-render if the user is still on History looking at the same client
+  if (state.activeDay === 'History' && h.client === name) {
+    renderHistoryPanel(document.getElementById('mainContent'));
+  }
+}
+
+function historySetRange(key) {
+  historyState.range = key;
+  historyState.editingRow = null;
+  renderHistoryPanel(document.getElementById('mainContent'));
+}
+
+function historyStartEdit(i) {
+  const c = historyState.data.charges[i];
+  if (!c) return;
+  // Older Apps Script deployments don't send row numbers — editing needs them
+  if (c.row === undefined || c.row === null) {
+    showToast('⚠️ Redeploy the Apps Script (v2.0) to enable editing');
+    return;
+  }
+  historyState.editingRow = c.row;
+  renderHistoryPanel(document.getElementById('mainContent'));
+}
+
+function historyCancelEdit() {
+  historyState.editingRow = null;
+  renderHistoryPanel(document.getElementById('mainContent'));
+}
+
+// POST is fire-and-forget (no-cors — same limitation as registryWrite),
+// so after writing we wait for Apps Script to commit, re-fetch the client's
+// history, and run `verify` against the fresh data to confirm it landed.
+async function historyWrite(payload, successMsg, verify) {
+  const h = historyState;
+  h.editingRow = null;
+  h.loading = true;
+  renderHistoryPanel(document.getElementById('mainContent'));
+  try {
+    await fetch(APPS_SCRIPT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (e) {
+    console.error('historyWrite POST failed', e);
+  }
+  await new Promise(r => setTimeout(r, 1200));
+  await historyFetch(); // sets loading=false and re-renders
+  const ok = h.data && verify ? verify(h.data) : !!h.data;
+  showToast(ok ? successMsg : '⚠️ Couldn\'t confirm — check the sheet');
+}
+
+async function historySaveEdit(i) {
+  const c = historyState.data.charges[i];
+  if (!c) return;
+  const patch = {
+    service: document.getElementById('histEditService').value.trim(),
+    amount: parseFloat(document.getElementById('histEditAmount').value) || 0,
+    materials: parseFloat(document.getElementById('histEditMaterials').value) || 0,
+    notes: document.getElementById('histEditNotes').value.trim(),
+  };
+  await historyWrite({
+    action: 'updateLogCharge',
+    row: c.row,
+    expect: { client: c.clientAsLogged, rawDate: c.rawDate },
+    patch
+  }, '✓ Charge updated in Google Sheet', data => {
+    const fresh = (data.charges || []).find(x => x.row === c.row);
+    return !!fresh && Math.abs((fresh.amount || 0) - patch.amount) < 0.005
+      && (fresh.service || '') === patch.service;
+  });
+}
+
+async function historyDeleteCharge(i) {
+  const c = historyState.data.charges[i];
+  if (!c) return;
+  if (!confirm(`Delete this charge?\n\n${c.service} — $${(c.amount || 0).toFixed(2)} on ${c.date}\n\nThis removes the row from the Google Sheet.`)) return;
+  await historyWrite({
+    action: 'deleteLogCharge',
+    row: c.row,
+    expect: { client: c.clientAsLogged, rawDate: c.rawDate }
+  }, '✓ Charge deleted from Google Sheet', data => {
+    // The exact charge (same date + service + amount) should no longer exist
+    return !(data.charges || []).some(x =>
+      x.rawDate === c.rawDate && x.service === c.service &&
+      Math.abs((x.amount || 0) - (c.amount || 0)) < 0.005 && x.row === c.row);
+  });
+}
+
 // ── Fireworks (SAVE DAY celebration) ──────────────────────────────────────
-// Full-screen canvas particle burst, ~2.5s, removes itself when done.
-// Pure JS — no libraries, taps pass through (pointer-events:none).
+// Full-screen canvas particle show, ~8s: opening salvo, steady barrage,
+// grand finale of oversized shells. Pure JS — no libraries, taps pass
+// through (pointer-events:none), canvas removes itself when done.
 function launchFireworks() {
   if (document.getElementById('fwCanvas')) return; // already running
   const canvas = document.createElement('canvas');
@@ -2872,38 +3291,38 @@ function launchFireworks() {
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
-  const COLORS = ['#FFD700','#7AB648','#E8640A','#4FC3F7','#FF6B81','#C8A951','#FFFFFF'];
+  const COLORS = ['#FFD700','#7AB648','#E8640A','#4FC3F7','#FF6B81','#C8A951','#FFFFFF','#B388FF','#69F0AE'];
   const GRAVITY = 0.045;
+  const SHOW_LENGTH = 8000;      // barrage + finale window
+  const MAX_PARTICLES = 1400;    // phone-GPU safety cap
   let particles = [];
-  let bursts = 0;
-  const MAX_BURSTS = 6;
+  let showOver = false;
 
-  function burst() {
-    const x = canvas.width * (0.15 + Math.random() * 0.7);
-    const y = canvas.height * (0.15 + Math.random() * 0.45);
+  function burst(big) {
+    if (particles.length > MAX_PARTICLES) return; // skip if saturated
+    const x = canvas.width * (0.08 + Math.random() * 0.84);
+    const y = canvas.height * (0.10 + Math.random() * (big ? 0.4 : 0.5));
     const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    const count = 36 + Math.floor(Math.random() * 24);
+    const count = big ? 110 + Math.floor(Math.random() * 50) : 55 + Math.floor(Math.random() * 35);
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + Math.random() * 0.2;
-      const speed = 2 + Math.random() * 3.5;
+      const speed = (big ? 2.5 : 2) + Math.random() * (big ? 5 : 3.8);
       particles.push({
         x, y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         life: 1,
-        decay: 0.012 + Math.random() * 0.012,
-        size: 2 + Math.random() * 2,
+        decay: (big ? 0.007 : 0.010) + Math.random() * 0.010,
+        size: (big ? 2.5 : 2) + Math.random() * (big ? 3 : 2),
         color: Math.random() < 0.3 ? COLORS[Math.floor(Math.random() * COLORS.length)] : color,
       });
     }
-    bursts++;
-    if (bursts < MAX_BURSTS) setTimeout(burst, 280 + Math.random() * 250);
   }
 
   function frame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles = particles.filter(p => p.life > 0);
-    if (!particles.length && bursts >= MAX_BURSTS) {
+    if (!particles.length && showOver) {
       canvas.remove();
       return;
     }
@@ -2923,10 +3342,21 @@ function launchFireworks() {
     requestAnimationFrame(frame);
   }
 
-  burst();
+  // Opening salvo — three shells right away
+  burst(); burst(true);
+  setTimeout(burst, 180);
+  // Steady barrage across the show, occasional big shell mixed in
+  for (let t = 400; t < SHOW_LENGTH - 1400; t += 240 + Math.random() * 220) {
+    setTimeout(() => burst(Math.random() < 0.2), t);
+  }
+  // Grand finale — four oversized shells nearly at once
+  [1300, 1150, 1000, 850].forEach(offset =>
+    setTimeout(() => burst(true), SHOW_LENGTH - offset));
+  setTimeout(() => { showOver = true; }, SHOW_LENGTH);
+
   requestAnimationFrame(frame);
-  // Hard stop after 6s no matter what (battery-friendly failsafe)
-  setTimeout(() => { const c = document.getElementById('fwCanvas'); if (c) c.remove(); }, 6000);
+  // Hard stop failsafe no matter what (battery-friendly)
+  setTimeout(() => { const c = document.getElementById('fwCanvas'); if (c) c.remove(); }, 12000);
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────
